@@ -36,7 +36,18 @@
       "Bash(done)",
       "Bash(powershell.exe -NoProfile -Command \"Get-ChildItem -Path ''C:\\\\Users\\\\leojo_seszrpr\\\\AppData\\\\Roaming\\\\Ferrum\\\\ferrum_test\\\\1.20.1\\\\saves\\\\Ferrum_Test\\\\datapacks\\\\test'' -Recurse | ForEach-Object { Write-Host $_.FullName; if \\(-not $_.PSIsContainer\\) { Get-Content $_.FullName -Raw | Write-Host } }\")",
       "Bash(powershell.exe -NoProfile -Command \":*)",
-      "Bash(powershell.exe -NoProfile -Command \"Get-Content ''C:\\\\Users\\\\leojo_seszrpr\\\\AppData\\\\Roaming\\\\Ferrum\\\\ferrum_test\\\\1.20.1\\\\logs\\\\latest.log'' -Tail 80\")"
+      "Bash(powershell.exe -NoProfile -Command \"Get-Content ''C:\\\\Users\\\\leojo_seszrpr\\\\AppData\\\\Roaming\\\\Ferrum\\\\ferrum_test\\\\1.20.1\\\\logs\\\\latest.log'' -Tail 80\")",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:launchermeta.mojang.com)",
+      "WebFetch(domain:data.minecraft.net)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:cdn.jsdelivr.net)",
+      "WebSearch",
+      "WebFetch(domain:unpkg.com)",
+      "WebFetch(domain:raw.githubusercontents.com)",
+      "WebFetch(domain:api.github.com)",
+      "Bash(powershell.exe -NoProfile -Command \"Set-Location \"\"C:\\\\Users\\\\leojo_seszrpr\\\\Downloads\\\\steel''s datapack editor\"\"; & ''C:\\\\Program Files\\\\nodejs\\\\node.exe'' scripts/download-textures.mjs\")",
+      "Bash(powershell.exe -NoProfile -Command \"Set-Location \"\"C:\\\\Users\\\\leojo_seszrpr\\\\Downloads\\\\steel''s datapack editor\"\"; & ''C:\\\\Program Files\\\\nodejs\\\\npm.cmd'' run electron:build\")"
     ]
   }
 }

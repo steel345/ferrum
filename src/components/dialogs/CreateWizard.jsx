@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react'
 import useStore from '../../store/useStore'
 import { MC_ITEMS } from '../../data/minecraftData'
+import McTexture from '../McTexture'
 
 // ── Field components defined OUTSIDE to prevent remount on re-render ──────────
 function Field({ label, value, onChange, placeholder, hint, type = 'text' }) {
@@ -55,9 +56,7 @@ function CraftingGrid({ slots, onSlotClick, result, onResultClick, type }) {
       >
         {item ? (
           <>
-            <span style={{ fontSize: 20, lineHeight: 1 }}>
-              {MC_ITEMS.find(i => i.id === item)?.emoji || '📦'}
-            </span>
+            <McTexture item={MC_ITEMS.find(i => i.id === item)} size={big ? 32 : 24} />
             <span style={{ fontSize: 8, color: '#6b7280', maxWidth: big ? 50 : 40,
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {label}
@@ -165,7 +164,7 @@ function ItemPicker({ onPick, onClose }) {
                   alignItems: 'center', gap: 2, transition: 'all 0.1s' }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = '#2563eb'; e.currentTarget.style.background = '#0f1e35' }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = '#1a3050'; e.currentTarget.style.background = '#0b1525' }}>
-                <span style={{ fontSize: 20 }}>{item.emoji}</span>
+                <McTexture item={item} size={24} />
                 <span style={{ fontSize: 8, color: '#64748b', textAlign: 'center',
                   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 60 }}>
                   {item.label}
@@ -306,7 +305,7 @@ function RecipePreview({ recipeType, slots, result, resultCount }) {
       }}>
         {item ? (
           <>
-            <span style={{ fontSize: big ? 28 : 22, lineHeight: 1 }}>{mc?.emoji || '📦'}</span>
+            <McTexture item={mc} size={big ? 36 : 28} />
             {big && resultCount > 1 && (
               <span style={{ position: 'absolute', bottom: 2, right: 3, fontSize: 9,
                 color: '#fff', fontWeight: 700, textShadow: '1px 1px 0 #000' }}>{resultCount}</span>
