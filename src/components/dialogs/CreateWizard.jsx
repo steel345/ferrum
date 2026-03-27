@@ -188,7 +188,7 @@ function buildRecipeJson(type, slots, result, resultCount) {
     return {
       type: `minecraft:${type}`,
       ingredient: slots[0] ? { item: slots[0] } : { item: 'minecraft:iron_ore' },
-      result: res,
+      result,   // smelting uses a plain string, not an object
       experience: 0.7,
       cookingtime: type === 'smelting' ? 200 : 100,
     }

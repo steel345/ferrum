@@ -25,7 +25,17 @@
       "Bash(cmd.exe /c \"cd \"\"C:\\\\Users\\\\leojo_seszrpr\\\\Downloads\\\\steel''s datapack editor\"\" && npm run electron:build\")",
       "Bash(cmd.exe /c \"cd /d \"\"C:\\\\Users\\\\leojo_seszrpr\\\\Downloads\\\\steel''s datapack editor\"\" && npm run electron:build 2>&1\")",
       "Bash(powershell.exe -Command \"Set-Location \"\"C:\\\\Users\\\\leojo_seszrpr\\\\Downloads\\\\steel''s datapack editor\"\"; npm run electron:build\")",
-      "Bash(powershell.exe -Command \"Set-Location \"\"C:\\\\Users\\\\leojo_seszrpr\\\\Downloads\\\\steel''s datapack editor\"\"; & ''C:\\\\Program Files\\\\nodejs\\\\npm.cmd'' run electron:build\")"
+      "Bash(powershell.exe -Command \"Set-Location \"\"C:\\\\Users\\\\leojo_seszrpr\\\\Downloads\\\\steel''s datapack editor\"\"; & ''C:\\\\Program Files\\\\nodejs\\\\npm.cmd'' run electron:build\")",
+      "Bash(find C:Usersleojo_seszrprAppDataRoaming -maxdepth 2 -name *.json)",
+      "Bash(powershell.exe -NoProfile -Command \"Get-ChildItem -Path $env:APPDATA -Recurse -Filter ''ferrum_projects.json'' -ErrorAction SilentlyContinue | Select-Object FullName\")",
+      "Bash(powershell.exe -NoProfile -Command \"Get-ChildItem -Path $env:LOCALAPPDATA -Recurse -Filter ''ferrum_projects.json'' -ErrorAction SilentlyContinue | Select-Object FullName\")",
+      "Bash(powershell.exe -NoProfile -Command \"Get-ChildItem $env:APPDATA\\\\Ferrum -Recurse -ErrorAction SilentlyContinue | Select-Object FullName\")",
+      "Bash(while read:*)",
+      "Bash(do echo:*)",
+      "Read(//c/Users/leojo_seszrpr/Downloads/steel's datapack editor/**)",
+      "Bash(done)",
+      "Bash(powershell.exe -NoProfile -Command \"Get-ChildItem -Path ''C:\\\\Users\\\\leojo_seszrpr\\\\AppData\\\\Roaming\\\\Ferrum\\\\ferrum_test\\\\1.20.1\\\\saves\\\\Ferrum_Test\\\\datapacks\\\\test'' -Recurse | ForEach-Object { Write-Host $_.FullName; if \\(-not $_.PSIsContainer\\) { Get-Content $_.FullName -Raw | Write-Host } }\")",
+      "Bash(powershell.exe -NoProfile -Command \":*)"
     ]
   }
 }

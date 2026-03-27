@@ -954,22 +954,19 @@ export const FILE_TEMPLATES = {
   mcfunction: `# Function file\n# Author: {author}\n\n`,
   recipe_shaped: {
     type: 'minecraft:crafting_shaped',
-    category: 'misc',
     pattern: ['###', '# #', '###'],
     key: { '#': { item: 'minecraft:air' } },
-    result: { id: 'minecraft:stone', count: 1 },
+    result: { item: 'minecraft:stone', count: 1 },
   },
   recipe_shapeless: {
     type: 'minecraft:crafting_shapeless',
-    category: 'misc',
     ingredients: [],
-    result: { id: 'minecraft:stone', count: 1 },
+    result: { item: 'minecraft:stone', count: 1 },
   },
   recipe_smelting: {
     type: 'minecraft:smelting',
-    category: 'misc',
     ingredient: { item: 'minecraft:iron_ore' },
-    result: { id: 'minecraft:iron_ingot' },
+    result: 'minecraft:iron_ingot',
     experience: 0.7,
     cookingtime: 200,
   },
@@ -987,7 +984,7 @@ export const FILE_TEMPLATES = {
   },
   advancement: {
     display: {
-      icon: { id: 'minecraft:diamond' },
+      icon: { item: 'minecraft:diamond' },
       title: { translate: 'advancements.custom.title' },
       description: { translate: 'advancements.custom.description' },
     },
