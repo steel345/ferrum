@@ -35,7 +35,8 @@
       "Read(//c/Users/leojo_seszrpr/Downloads/steel's datapack editor/**)",
       "Bash(done)",
       "Bash(powershell.exe -NoProfile -Command \"Get-ChildItem -Path ''C:\\\\Users\\\\leojo_seszrpr\\\\AppData\\\\Roaming\\\\Ferrum\\\\ferrum_test\\\\1.20.1\\\\saves\\\\Ferrum_Test\\\\datapacks\\\\test'' -Recurse | ForEach-Object { Write-Host $_.FullName; if \\(-not $_.PSIsContainer\\) { Get-Content $_.FullName -Raw | Write-Host } }\")",
-      "Bash(powershell.exe -NoProfile -Command \":*)"
+      "Bash(powershell.exe -NoProfile -Command \":*)",
+      "Bash(powershell.exe -NoProfile -Command \"Get-Content ''C:\\\\Users\\\\leojo_seszrpr\\\\AppData\\\\Roaming\\\\Ferrum\\\\ferrum_test\\\\1.20.1\\\\logs\\\\latest.log'' -Tail 80\")"
     ]
   }
 }

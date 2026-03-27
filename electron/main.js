@@ -264,34 +264,53 @@ ipcMain.handle('launch-minecraft', async (event, { mcDir, version, datapackFiles
     const gameDir = path.join(app.getPath('userData'), 'ferrum_test', version)
     fs.mkdirSync(gameDir, { recursive: true })
 
-    // 5. Write datapack files
+    // 5. Write datapack files into every valid world (has level.dat) + a fallback world
     const namespace = projectNamespace || 'ferrum_pack'
-    const datapackDir = path.join(gameDir, 'saves', 'Ferrum_Test', 'datapacks', namespace)
-    fs.mkdirSync(datapackDir, { recursive: true })
+    const savesDir = path.join(gameDir, 'saves')
+    fs.mkdirSync(savesDir, { recursive: true })
 
-    if (datapackFiles && typeof datapackFiles === 'object') {
+    // Collect existing valid worlds (have a level.dat)
+    let validWorlds = []
+    if (fs.existsSync(savesDir)) {
+      for (const entry of fs.readdirSync(savesDir)) {
+        const levelDat = path.join(savesDir, entry, 'level.dat')
+        if (fs.existsSync(levelDat)) validWorlds.push(entry)
+      }
+    }
+    // If no worlds exist yet, we'll create one below after first launch — use placeholder
+    if (validWorlds.length === 0) validWorlds = ['Ferrum_Test']
+
+    // Pick the world to auto-load (most recently modified level.dat, or first)
+    let targetWorld = validWorlds[0]
+    if (validWorlds.length > 1) {
+      let newest = 0
+      for (const w of validWorlds) {
+        const t = fs.statSync(path.join(savesDir, w, 'level.dat')).mtimeMs
+        if (t > newest) { newest = t; targetWorld = w }
+      }
+    }
+
+    // Write datapacks into every valid world so it works no matter which world user loads
+    function writeDatapackToWorld(worldName) {
+      const dpDir = path.join(savesDir, worldName, 'datapacks', namespace)
+      fs.mkdirSync(dpDir, { recursive: true })
+      if (!datapackFiles || typeof datapackFiles !== 'object') return
       const dpRoot = projectDatapackRoot || ''
       for (const [filePath, content] of Object.entries(datapackFiles)) {
-        // Skip resourcepack files and binary data URLs
         if (typeof content === 'string' && content.startsWith('data:')) continue
         if (filePath.includes('_resourcepack')) continue
-
-        // Strip the virtual datapack root prefix so files land correctly
         let rel = filePath
-        if (dpRoot && filePath.startsWith(dpRoot + '/')) {
-          rel = filePath.slice(dpRoot.length + 1)
-        } else if (dpRoot && filePath.startsWith(dpRoot)) {
-          rel = filePath.slice(dpRoot.length).replace(/^[\\/]/, '')
-        }
+        if (dpRoot && filePath.startsWith(dpRoot + '/')) rel = filePath.slice(dpRoot.length + 1)
+        else if (dpRoot && filePath.startsWith(dpRoot)) rel = filePath.slice(dpRoot.length).replace(/^[\\/]/, '')
         if (!rel || rel.endsWith('.gitkeep')) continue
-
-        const fullPath = path.join(datapackDir, rel)
+        const fullPath = path.join(dpDir, rel)
         fs.mkdirSync(path.dirname(fullPath), { recursive: true })
         fs.writeFileSync(fullPath, typeof content === 'string' ? content : JSON.stringify(content, null, 2), 'utf8')
       }
     }
 
-    send(`[Ferrum] Datapack written to: ${datapackDir}`)
+    for (const w of validWorlds) writeDatapackToWorld(w)
+    send(`[Ferrum] Datapack written to ${validWorlds.length} world(s). Auto-loading: ${targetWorld}`)
 
     // 6. Build launch arguments
     const mainClass = versionData.mainClass || 'net.minecraft.client.main.Main'
@@ -347,6 +366,9 @@ ipcMain.handle('launch-minecraft', async (event, { mcDir, version, datapackFiles
       }
       return resolved
     })
+
+    // Auto-load into the target world (1.20+ supports --quickPlaySingleplayer)
+    gameArgs.push('--quickPlaySingleplayer', targetWorld)
 
     const fullArgs = [...jvmArgs, mainClass, ...gameArgs]
 
