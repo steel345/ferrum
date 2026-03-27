@@ -12,6 +12,9 @@ try {
   autoUpdater = require('electron-updater').autoUpdater
 } catch (_) {}
 
+// ── Force consistent app name so userData path is the same in dev + prod ──────
+app.setName('Ferrum')
+
 // ── Dev detection ─────────────────────────────────────────────────────────────
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged
 
