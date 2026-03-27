@@ -493,6 +493,87 @@ export default function CreateWizard({ onClose }) {
     </div>
   )
 
+  // ── Step: result (show code + preview) ──────────────────────────────────
+  if (step === 'result') {
+    const fileName = generatedPath.split('/').pop()
+    return (
+      <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.8)',
+        backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ background: '#07111f', border: '1px solid #1a3050', borderRadius: 14,
+          padding: 28, width: 560, maxWidth: '95vw', maxHeight: '90vh', display: 'flex',
+          flexDirection: 'column', boxShadow: '0 0 60px rgba(37,99,235,0.15)' }}>
+
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+            <button onClick={() => setStep('form')}
+              style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: 18 }}>←</button>
+            <span style={{ fontSize: 20 }}>{TYPES.find(t => t.id === type)?.icon}</span>
+            <h2 style={{ color: '#e2e8f0', fontSize: 15, fontWeight: 700, margin: 0 }}>{fileName}</h2>
+            <div style={{ flex: 1 }} />
+            <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: 20 }}>✕</button>
+          </div>
+
+          {/* Toggle tabs */}
+          <div style={{ display: 'flex', marginBottom: 12, background: '#0b1525',
+            borderRadius: 8, padding: 3, border: '1px solid #1a3050' }}>
+            <button onClick={() => setShowPreview(false)}
+              style={{ flex: 1, padding: '7px 0', borderRadius: 6, border: 'none', fontSize: 12, fontWeight: 600,
+                cursor: 'pointer', background: !showPreview ? '#2563eb' : 'transparent',
+                color: !showPreview ? '#fff' : '#64748b', transition: 'all 0.15s' }}>
+              {'{ }'} Code
+            </button>
+            {canPreview && (
+              <button onClick={() => setShowPreview(true)}
+                style={{ flex: 1, padding: '7px 0', borderRadius: 6, border: 'none', fontSize: 12, fontWeight: 600,
+                  cursor: 'pointer', background: showPreview ? '#2563eb' : 'transparent',
+                  color: showPreview ? '#fff' : '#64748b', transition: 'all 0.15s' }}>
+                🎮 Preview
+              </button>
+            )}
+          </div>
+
+          {/* Content area */}
+          <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+            {!showPreview ? (
+              <pre style={{ margin: 0, background: '#030c18', border: '1px solid #1a3050', borderRadius: 8,
+                padding: 16, color: '#93c5fd', fontSize: 12, fontFamily: 'monospace',
+                overflowX: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                {generatedContent}
+              </pre>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center',
+                minHeight: 200, background: '#030c18', border: '1px solid #1a3050', borderRadius: 8, padding: 24 }}>
+                <RecipePreview recipeType={recipeType} slots={slots} result={result} resultCount={resultCount} />
+              </div>
+            )}
+          </div>
+
+          {/* Path hint */}
+          <p style={{ color: '#334155', fontSize: 10, margin: '8px 0 12px', fontFamily: 'monospace' }}>
+            {generatedPath}
+          </p>
+
+          {/* Action buttons */}
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button onClick={() => setStep('form')}
+              style={{ flex: 1, padding: '10px 0', borderRadius: 8, background: 'transparent',
+                border: '1px solid #1a3050', color: '#64748b', fontSize: 13, cursor: 'pointer' }}
+              onMouseEnter={e => e.currentTarget.style.borderColor = '#2563eb'}
+              onMouseLeave={e => e.currentTarget.style.borderColor = '#1a3050'}>
+              ← Edit
+            </button>
+            <button onClick={saveToProject}
+              style={{ flex: 2, padding: '10px 0', borderRadius: 8, border: 'none',
+                background: 'linear-gradient(135deg,#16a34a,#15803d)',
+                color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+              💾 Save to Project
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   // ── Step: form ───────────────────────────────────────────────────────────
   const T = TYPES.find(t => t.id === type)
   return (
@@ -645,85 +726,4 @@ export default function CreateWizard({ onClose }) {
       {pickerOpen && <ItemPicker onPick={handlePick} onClose={() => setPickerOpen(false)} />}
     </>
   )
-
-  // ── Step: result (show code + preview) ──────────────────────────────────
-  if (step === 'result') {
-    const fileName = generatedPath.split('/').pop()
-    return (
-      <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.8)',
-        backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ background: '#07111f', border: '1px solid #1a3050', borderRadius: 14,
-          padding: 28, width: 560, maxWidth: '95vw', maxHeight: '90vh', display: 'flex',
-          flexDirection: 'column', boxShadow: '0 0 60px rgba(37,99,235,0.15)' }}>
-
-          {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-            <button onClick={() => setStep('form')}
-              style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: 18 }}>←</button>
-            <span style={{ fontSize: 20 }}>{TYPES.find(t => t.id === type)?.icon}</span>
-            <h2 style={{ color: '#e2e8f0', fontSize: 15, fontWeight: 700, margin: 0 }}>{fileName}</h2>
-            <div style={{ flex: 1 }} />
-            <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: 20 }}>✕</button>
-          </div>
-
-          {/* Toggle tabs */}
-          <div style={{ display: 'flex', gap: 0, marginBottom: 12, background: '#0b1525',
-            borderRadius: 8, padding: 3, border: '1px solid #1a3050' }}>
-            <button onClick={() => setShowPreview(false)}
-              style={{ flex: 1, padding: '7px 0', borderRadius: 6, border: 'none', fontSize: 12, fontWeight: 600,
-                cursor: 'pointer', background: !showPreview ? '#2563eb' : 'transparent',
-                color: !showPreview ? '#fff' : '#64748b', transition: 'all 0.15s' }}>
-              { } Code
-            </button>
-            {canPreview && (
-              <button onClick={() => setShowPreview(true)}
-                style={{ flex: 1, padding: '7px 0', borderRadius: 6, border: 'none', fontSize: 12, fontWeight: 600,
-                  cursor: 'pointer', background: showPreview ? '#2563eb' : 'transparent',
-                  color: showPreview ? '#fff' : '#64748b', transition: 'all 0.15s' }}>
-                🎮 Preview
-              </button>
-            )}
-          </div>
-
-          {/* Content area */}
-          <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
-            {!showPreview ? (
-              <pre style={{ margin: 0, background: '#030c18', border: '1px solid #1a3050', borderRadius: 8,
-                padding: 16, color: '#93c5fd', fontSize: 12, fontFamily: 'monospace',
-                overflowX: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-                {generatedContent}
-              </pre>
-            ) : (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center',
-                minHeight: 200, background: '#030c18', border: '1px solid #1a3050', borderRadius: 8, padding: 24 }}>
-                <RecipePreview recipeType={recipeType} slots={slots} result={result} resultCount={resultCount} />
-              </div>
-            )}
-          </div>
-
-          {/* Path hint */}
-          <p style={{ color: '#334155', fontSize: 10, marginTop: 8, fontFamily: 'monospace', margin: '8px 0 12px' }}>
-            {generatedPath}
-          </p>
-
-          {/* Action buttons */}
-          <div style={{ display: 'flex', gap: 10 }}>
-            <button onClick={() => setStep('form')}
-              style={{ flex: 1, padding: '10px 0', borderRadius: 8, background: 'transparent',
-                border: '1px solid #1a3050', color: '#64748b', fontSize: 13, cursor: 'pointer' }}
-              onMouseEnter={e => e.currentTarget.style.borderColor = '#2563eb'}
-              onMouseLeave={e => e.currentTarget.style.borderColor = '#1a3050'}>
-              ← Edit
-            </button>
-            <button onClick={saveToProject}
-              style={{ flex: 2, padding: '10px 0', borderRadius: 8, border: 'none',
-                background: 'linear-gradient(135deg,#16a34a,#15803d)',
-                color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-              💾 Save to Project
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
 }
