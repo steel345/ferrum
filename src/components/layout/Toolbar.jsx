@@ -24,6 +24,7 @@ export default function Toolbar() {
   const mcver = project ? MC_VERSIONS.find(v => v.id === project.version) : null
 
   return (
+    <>
     <div className="flex items-center gap-2 px-3 h-11 shrink-0 select-none"
       style={{
         background: '#040810',
@@ -159,7 +160,7 @@ export default function Toolbar() {
         </div>
       )}
     </div>
-
     {showWizard && <CreateWizard onClose={() => setShowWizard(false)} />}
+    </>
   )
 }
