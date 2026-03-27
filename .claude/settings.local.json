@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:scythe-editor.com)",
+      "WebFetch(domain:www.youtube.com)",
+      "Bash(ls /c/Users/leojo_seszrpr/scoop/apps/nodejs*/current/)",
+      "Bash(find /c -maxdepth 4 -name npm.cmd)",
+      "Bash(cmd.exe /c \"where npm 2>&1\")",
+      "Bash(cmd.exe /c \"where node 2>&1\")",
+      "Bash(cmd.exe /c \"node --version 2>&1 && npm --version 2>&1\")",
+      "Bash(cmd.exe /c \"node --version\")",
+      "Bash(echo \"exit: $?\")",
+      "Bash(powershell.exe -Command \"Get-Command node -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source\")",
+      "Bash(powershell.exe -Command \"Get-Command npm -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source\")",
+      "Read(//usr/local/**)",
+      "Read(//usr/**)",
+      "Bash(command -v npm)",
+      "Bash(ls \"C:\\\\Users\\\\leojo_seszrpr\\\\Downloads\\\\steel''s datapack editor\\\\electron\"\" 2>/dev/null && echo \"---\" && ls \"C:Usersleojo_seszrprDownloadssteel 's datapack editorsrcutils\"\")",
+      "Bash(python3 -c \":*)",
+      "Bash(node -e \":*)",
+      "Bash(powershell -Command \":*)",
+      "Bash(powershell -Command \"Select-String -Path \"\"C:\\\\Users\\\\leojo_seszrpr\\\\Downloads\\\\steel''s datapack editor\\\\src\\\\data\\\\minecraftData.js\"\" -Pattern \"\"cat:\"\" | Measure-Object | Select-Object -ExpandProperty Count\")",
+      "Bash(powershell -Command \"Select-String -Path \"\"C:\\\\Users\\\\leojo_seszrpr\\\\Downloads\\\\steel''s datapack editor\\\\src\\\\data\\\\minecraftData.js\"\" -Pattern ''export const MC_ITEM_CATEGORIES''\")",
+      "Bash(powershell -Command \"New-Item -ItemType Directory -Path \"\"C:\\\\Users\\\\leojo_seszrpr\\\\Downloads\\\\steel''s datapack editor\\\\.github\\\\workflows\"\" -Force | Out-Null; Write-Host ''done''\")"
+    ]
+  }
+}
