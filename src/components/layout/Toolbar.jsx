@@ -1,6 +1,7 @@
-import React from 'react'
+import React, { useState } from 'react'
 import useStore from '../../store/useStore'
-import { Save, Upload, Download, Settings, Plus, FolderOpen, Archive } from 'lucide-react'
+import { Save, Upload, Download, Settings, Plus, FolderOpen, Archive, Wand2 } from 'lucide-react'
+import CreateWizard from '../dialogs/CreateWizard'
 import { exportZip } from '../../utils/zipUtils'
 import { MC_VERSIONS } from '../../data/minecraftData'
 import { isElectron, electronAPI } from '../../utils/electronBridge'
@@ -8,6 +9,7 @@ import { isElectron, electronAPI } from '../../utils/electronBridge'
 export default function Toolbar() {
   const { project, files, dirtyFiles, openDialog, saveAll, showToast, saveCurrentProject } = useStore()
   const hasDirty = Object.keys(dirtyFiles).length > 0
+  const [showWizard, setShowWizard] = useState(false)
 
   async function handleExport() {
     if (!project) return
@@ -51,6 +53,18 @@ export default function Toolbar() {
           <Plus size={14} />
           <span>New</span>
         </button>
+
+        {/* Create wizard — only when a project is open */}
+        {project && (
+          <button
+            className="btn btn-primary px-2 py-1.5 rounded flex items-center gap-1.5 text-xs"
+            onClick={() => setShowWizard(true)}
+            title="Create recipe, function, advancement…"
+            style={{ background:'linear-gradient(135deg,#7c3aed,#6d28d9)', border:'none' }}>
+            <Wand2 size={14} />
+            <span>Create</span>
+          </button>
+        )}
 
         {/* Save all */}
         {project && (
@@ -145,5 +159,7 @@ export default function Toolbar() {
         </div>
       )}
     </div>
+
+    {showWizard && <CreateWizard onClose={() => setShowWizard(false)} />}
   )
 }

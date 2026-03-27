@@ -136,11 +136,24 @@ export default function AIPanel() {
   }, [response])
 
   useEffect(() => {
-    if (activeTab && mode === 'generate') {
-      const parts = activeTab.split('/')
-      setTargetPath(parts.slice(0, -1).join('/') + '/ai_generated.json')
-    }
-  }, [activeTab, mode])
+    if (mode !== 'generate' || !project) return
+    const dp = project.datpackRoot
+    const ns = project.namespace
+    const base = `${dp}/data/${ns}`
+    const p = prompt.toLowerCase()
+    let guessed =
+      /recipe|craft|smelt|furnace|shaped|shapeless/.test(p) ? `${base}/recipes/ai_recipe.json` :
+      /loot.?table|loot|drop/.test(p)                       ? `${base}/loot_tables/ai_loot.json` :
+      /advancement|achieve/.test(p)                         ? `${base}/advancements/ai_advancement.json` :
+      /tag/.test(p)                                          ? `${base}/tags/items/ai_tag.json` :
+      /biome/.test(p)                                        ? `${base}/worldgen/biome/ai_biome.json` :
+      /dimension/.test(p)                                    ? `${base}/dimension/ai_dimension.json` :
+      /predicate/.test(p)                                    ? `${base}/predicates/ai_predicate.json` :
+      /function|mcfunction|command/.test(p)                  ? `${base}/functions/ai_function.mcfunction` :
+      activeTab ? (() => { const parts = activeTab.split('/'); return parts.slice(0,-1).join('/') + '/ai_generated.json' })() :
+      `${base}/functions/ai_generated.mcfunction`
+    setTargetPath(guessed)
+  }, [prompt, mode, project, activeTab])
 
   // ── File attachment handler ─────────────────────────────────────────────
   function handleFileAttach(e) {

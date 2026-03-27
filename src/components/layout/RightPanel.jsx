@@ -2,7 +2,7 @@ import React from 'react'
 import useStore from '../../store/useStore'
 import AssetBrowser from '../browsers/AssetBrowser'
 import AIPanel from '../ai/AIPanel'
-import TellrawPreview from '../preview/TellrawPreview'
+import PreviewPanel from '../preview/PreviewPanel'
 import { Layers, Cpu, Eye } from 'lucide-react'
 
 const TABS = [
@@ -39,7 +39,7 @@ export default function RightPanel() {
       <div className="flex-1 min-h-0 overflow-hidden">
         {rightPanel === 'assets'  && <AssetBrowser />}
         {rightPanel === 'ai'      && <AIPanel />}
-        {rightPanel === 'preview' && <TellrawPreview />}
+        {rightPanel === 'preview' && <PreviewPanel />}
       </div>
     </div>
   )

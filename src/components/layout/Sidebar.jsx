@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import useStore from '../../store/useStore'
 import { buildFileTree, getFileIcon, getFileType, isGitkeep } from '../../utils/scaffoldUtils'
-import { ChevronRight, ChevronDown, Plus, Trash2, FilePlus, FolderPlus, Edit3 } from 'lucide-react'
+import { ChevronRight, ChevronDown, Plus, Trash2, FilePlus, FolderPlus, Edit3, Pencil } from 'lucide-react'
 
 function FileIcon({ path }) {
   const type = getFileType(path)
@@ -39,7 +39,7 @@ function FolderIcon({ expanded, name }) {
 }
 
 function TreeNode({ node, depth }) {
-  const { openFile, activeTab, sidebarExpanded, toggleFolder, deleteFile, createFile, dirtyFiles } = useStore()
+  const { openFile, activeTab, sidebarExpanded, toggleFolder, deleteFile, createFile, renameFile, dirtyFiles } = useStore()
   const [contextMenu, setContextMenu] = useState(null)
   const [renaming, setRenaming] = useState(false)
   const [newName, setNewName] = useState(node.name)
@@ -83,6 +83,22 @@ function TreeNode({ node, depth }) {
     if (node.type === 'file') deleteFile(node.path)
   }
 
+  function handleRename() {
+    closeCtx()
+    setNewName(node.name)
+    setRenaming(true)
+  }
+
+  function commitRename() {
+    const trimmed = newName.trim()
+    if (trimmed && trimmed !== node.name) {
+      const parent = node.path.split('/').slice(0, -1).join('/')
+      const newPath = parent ? `${parent}/${trimmed}` : trimmed
+      renameFile(node.path, newPath)
+    }
+    setRenaming(false)
+  }
+
   function commitAddFile() {
     if (newItemName.trim()) {
       const path = `${node.path}/${newItemName.trim()}`
@@ -123,7 +139,20 @@ function TreeNode({ node, depth }) {
             <FileIcon path={node.path} />
           </>
         )}
-        <span className="truncate text-xs" style={{ flex: 1 }}>{node.name}</span>
+        {renaming ? (
+          <input
+            autoFocus
+            className="input text-xs py-0 px-1 h-5"
+            style={{ flex: 1, minWidth: 0 }}
+            value={newName}
+            onChange={e => setNewName(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') setRenaming(false) }}
+            onBlur={commitRename}
+            onClick={e => e.stopPropagation()}
+          />
+        ) : (
+          <span className="truncate text-xs" style={{ flex: 1 }}>{node.name}</span>
+        )}
         {isDirty && <span className="text-blue-400 text-xs ml-1">●</span>}
       </div>
 
@@ -143,10 +172,16 @@ function TreeNode({ node, depth }) {
                 <div className="context-menu-divider" />
               </>
             )}
+            <div className="context-menu-item" onClick={handleRename}>
+              <Pencil size={13} /> Rename
+            </div>
             {node.type === 'file' && (
-              <div className="context-menu-item danger" onClick={handleDelete}>
-                <Trash2 size={13} /> Delete
-              </div>
+              <>
+                <div className="context-menu-divider" />
+                <div className="context-menu-item danger" onClick={handleDelete}>
+                  <Trash2 size={13} /> Delete
+                </div>
+              </>
             )}
           </div>
         </>
