@@ -1,14 +1,35 @@
 import { create } from 'zustand'
 import { scaffoldProject } from '../utils/scaffoldUtils'
 
-// ── localStorage helpers ──────────────────────────────────────────────────────
+// ── Persistence helpers (file-based in Electron, localStorage fallback) ───────
+const eAPI = window.electronAPI || null
+
 function loadSavedProjects() {
+  // Electron: loaded async after init — start empty, populate via loadProjectsFromDisk()
+  if (eAPI?.loadProjects) return []
   try { return JSON.parse(localStorage.getItem('ferrum_projects') || '[]') }
   catch { return [] }
 }
+
 function persistSavedProjects(list) {
-  try { localStorage.setItem('ferrum_projects', JSON.stringify(list)) }
-  catch {}
+  const json = JSON.stringify(list)
+  if (eAPI?.saveProjects) {
+    eAPI.saveProjects(json).catch(() => {})
+  }
+  // Always also write localStorage as backup
+  try { localStorage.setItem('ferrum_projects', json) } catch {}
+}
+
+// Called once on app start in Electron to load from disk
+async function loadProjectsFromDisk(setFn) {
+  if (!eAPI?.loadProjects) return
+  try {
+    const res = await eAPI.loadProjects()
+    if (res?.ok && res.data) {
+      const list = JSON.parse(res.data)
+      setFn({ savedProjects: list })
+    }
+  } catch {}
 }
 
 const useStore = create((set, get) => ({
@@ -271,5 +292,8 @@ const useStore = create((set, get) => ({
     }, 3000)
   },
 }))
+
+// Load projects from disk immediately (Electron only)
+loadProjectsFromDisk(useStore.setState)
 
 export default useStore

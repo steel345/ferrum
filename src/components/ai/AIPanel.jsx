@@ -44,7 +44,7 @@ async function callFreeAI(systemPrompt, userMessage, attachedImage, onChunk) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: 'openai',
+      model: 'qwen-coder',  // Qwen2.5-Coder-32B — best free coding model
       messages: [
         { role: 'system', content: sys },
         { role: 'user',   content: usr },

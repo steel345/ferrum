@@ -176,7 +176,7 @@ function findSystemJava() {
 }
 
 // ── launch-minecraft ──────────────────────────────────────────────────────────
-ipcMain.handle('launch-minecraft', async (event, { mcDir, version, datapackFiles, projectNamespace }) => {
+ipcMain.handle('launch-minecraft', async (event, { mcDir, version, datapackFiles, projectNamespace, projectDatapackRoot }) => {
   if (mcProcess) {
     try { mcProcess.kill() } catch (_) {}
     mcProcess = null
@@ -267,8 +267,22 @@ ipcMain.handle('launch-minecraft', async (event, { mcDir, version, datapackFiles
     fs.mkdirSync(datapackDir, { recursive: true })
 
     if (datapackFiles && typeof datapackFiles === 'object') {
+      const dpRoot = projectDatapackRoot || ''
       for (const [filePath, content] of Object.entries(datapackFiles)) {
-        const fullPath = path.join(datapackDir, filePath)
+        // Skip resourcepack files and binary data URLs
+        if (typeof content === 'string' && content.startsWith('data:')) continue
+        if (filePath.includes('_resourcepack')) continue
+
+        // Strip the virtual datapack root prefix so files land correctly
+        let rel = filePath
+        if (dpRoot && filePath.startsWith(dpRoot + '/')) {
+          rel = filePath.slice(dpRoot.length + 1)
+        } else if (dpRoot && filePath.startsWith(dpRoot)) {
+          rel = filePath.slice(dpRoot.length).replace(/^[\\/]/, '')
+        }
+        if (!rel || rel.endsWith('.gitkeep')) continue
+
+        const fullPath = path.join(datapackDir, rel)
         fs.mkdirSync(path.dirname(fullPath), { recursive: true })
         fs.writeFileSync(fullPath, typeof content === 'string' ? content : JSON.stringify(content, null, 2), 'utf8')
       }
@@ -379,12 +393,34 @@ ipcMain.handle('launch-minecraft', async (event, { mcDir, version, datapackFiles
   }
 })
 
+// ── projects persistence (file-based, more reliable than localStorage) ───────
+ipcMain.handle('save-projects', async (event, projectsJson) => {
+  try {
+    const savePath = path.join(app.getPath('userData'), 'ferrum_projects.json')
+    fs.writeFileSync(savePath, projectsJson, 'utf8')
+    return { ok: true }
+  } catch (err) {
+    return { ok: false, error: err.message }
+  }
+})
+
+ipcMain.handle('load-projects', async () => {
+  try {
+    const savePath = path.join(app.getPath('userData'), 'ferrum_projects.json')
+    if (!fs.existsSync(savePath)) return { ok: true, data: '[]' }
+    const data = fs.readFileSync(savePath, 'utf8')
+    return { ok: true, data }
+  } catch (err) {
+    return { ok: false, error: err.message }
+  }
+})
+
 // ── free-ai-request (bypasses browser CORS via Node.js fetch) ────────────────
 ipcMain.handle('free-ai-request', async (event, { systemPrompt, userMessage }) => {
   try {
     const https = require('https')
     const body = JSON.stringify({
-      model: 'openai',
+      model: 'qwen-coder',  // Qwen2.5-Coder-32B
       messages: [
         { role: 'system', content: (systemPrompt || '').slice(0, 2000) },
         { role: 'user',   content: (userMessage  || '').slice(0, 4000) },

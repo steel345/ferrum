@@ -88,6 +88,7 @@ export default function ActivityBar() {
         version: selectedVersion,
         datapackFiles: files,
         projectNamespace: project?.namespace || 'ferrum_pack',
+        projectDatapackRoot: project?.datpackRoot || '',
       })
 
       if (result && result.success) {

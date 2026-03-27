@@ -27,6 +27,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   maximizeWindow: () => ipcRenderer.send('window-maximize'),
   closeWindow: () => ipcRenderer.send('window-close'),
 
+  // ── Projects persistence ──────────────────────────────────────────────────
+  saveProjects: (json) => ipcRenderer.invoke('save-projects', json),
+  loadProjects: ()     => ipcRenderer.invoke('load-projects'),
+
   // ── Free AI (CORS-free via Node.js) ──────────────────────────────────────
   freeAIRequest: (opts) => ipcRenderer.invoke('free-ai-request', opts),
 
