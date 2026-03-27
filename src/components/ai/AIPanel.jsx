@@ -422,7 +422,7 @@ ${contextFile ? `\nCurrent file:\n${contextFile.slice(0, 3000)}` : ''}${attachNo
             <input ref={fileInputRef} type="file" accept="image/*,.json,.mcfunction,.txt" style={{ display: 'none' }} onChange={handleFileAttach} />
 
             {/* Generate button */}
-            <button className="btn btn-primary text-sm" style={{ flex: 1 }}
+            <button className="btn btn-primary text-sm"
               onClick={generate} disabled={loading || !prompt.trim()}
               style={{ flex: 1, opacity: loading || !prompt.trim() ? 0.6 : 1 }}>
               {loading ? (

@@ -21,7 +21,11 @@
       "Bash(powershell -Command \":*)",
       "Bash(powershell -Command \"Select-String -Path \"\"C:\\\\Users\\\\leojo_seszrpr\\\\Downloads\\\\steel''s datapack editor\\\\src\\\\data\\\\minecraftData.js\"\" -Pattern \"\"cat:\"\" | Measure-Object | Select-Object -ExpandProperty Count\")",
       "Bash(powershell -Command \"Select-String -Path \"\"C:\\\\Users\\\\leojo_seszrpr\\\\Downloads\\\\steel''s datapack editor\\\\src\\\\data\\\\minecraftData.js\"\" -Pattern ''export const MC_ITEM_CATEGORIES''\")",
-      "Bash(powershell -Command \"New-Item -ItemType Directory -Path \"\"C:\\\\Users\\\\leojo_seszrpr\\\\Downloads\\\\steel''s datapack editor\\\\.github\\\\workflows\"\" -Force | Out-Null; Write-Host ''done''\")"
+      "Bash(powershell -Command \"New-Item -ItemType Directory -Path \"\"C:\\\\Users\\\\leojo_seszrpr\\\\Downloads\\\\steel''s datapack editor\\\\.github\\\\workflows\"\" -Force | Out-Null; Write-Host ''done''\")",
+      "Bash(cmd.exe /c \"cd \"\"C:\\\\Users\\\\leojo_seszrpr\\\\Downloads\\\\steel''s datapack editor\"\" && npm run electron:build\")",
+      "Bash(cmd.exe /c \"cd /d \"\"C:\\\\Users\\\\leojo_seszrpr\\\\Downloads\\\\steel''s datapack editor\"\" && npm run electron:build 2>&1\")",
+      "Bash(powershell.exe -Command \"Set-Location \"\"C:\\\\Users\\\\leojo_seszrpr\\\\Downloads\\\\steel''s datapack editor\"\"; npm run electron:build\")",
+      "Bash(powershell.exe -Command \"Set-Location \"\"C:\\\\Users\\\\leojo_seszrpr\\\\Downloads\\\\steel''s datapack editor\"\"; & ''C:\\\\Program Files\\\\nodejs\\\\npm.cmd'' run electron:build\")"
     ]
   }
 }
