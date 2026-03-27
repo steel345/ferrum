@@ -47,7 +47,9 @@
       "WebFetch(domain:raw.githubusercontents.com)",
       "WebFetch(domain:api.github.com)",
       "Bash(powershell.exe -NoProfile -Command \"Set-Location \"\"C:\\\\Users\\\\leojo_seszrpr\\\\Downloads\\\\steel''s datapack editor\"\"; & ''C:\\\\Program Files\\\\nodejs\\\\node.exe'' scripts/download-textures.mjs\")",
-      "Bash(powershell.exe -NoProfile -Command \"Set-Location \"\"C:\\\\Users\\\\leojo_seszrpr\\\\Downloads\\\\steel''s datapack editor\"\"; & ''C:\\\\Program Files\\\\nodejs\\\\npm.cmd'' run electron:build\")"
+      "Bash(powershell.exe -NoProfile -Command \"Set-Location \"\"C:\\\\Users\\\\leojo_seszrpr\\\\Downloads\\\\steel''s datapack editor\"\"; & ''C:\\\\Program Files\\\\nodejs\\\\npm.cmd'' run electron:build\")",
+      "Bash(powershell.exe -NoProfile -Command \"Set-Location \"\"C:\\\\Users\\\\leojo_seszrpr\\\\Downloads\\\\steel''s datapack editor\"\"; & ''C:\\\\Program Files\\\\nodejs\\\\node.exe'' scripts/download-textures-complete.mjs\")",
+      "Bash(powershell.exe -NoProfile -Command \"Get-Process | Where-Object { $_.Name -like ''*Ferrum*'' -or $_.Name -like ''*electron*'' } | Stop-Process -Force -ErrorAction SilentlyContinue; Write-Host ''Killed''\")"
     ]
   }
 }
