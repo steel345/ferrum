@@ -6,5 +6,13 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
+    proxy: {
+      '/pollinations-api': {
+        target: 'https://text.pollinations.ai',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/pollinations-api/, ''),
+        secure: true,
+      },
+    },
   },
 })

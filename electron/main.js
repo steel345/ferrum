@@ -379,6 +379,55 @@ ipcMain.handle('launch-minecraft', async (event, { mcDir, version, datapackFiles
   }
 })
 
+// ── free-ai-request (bypasses browser CORS via Node.js fetch) ────────────────
+ipcMain.handle('free-ai-request', async (event, { systemPrompt, userMessage }) => {
+  try {
+    const https = require('https')
+    const body = JSON.stringify({
+      model: 'openai',
+      messages: [
+        { role: 'system', content: (systemPrompt || '').slice(0, 2000) },
+        { role: 'user',   content: (userMessage  || '').slice(0, 4000) },
+      ],
+    })
+
+    return await new Promise((resolve, reject) => {
+      const req = https.request({
+        hostname: 'text.pollinations.ai',
+        path: '/openai',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(body),
+        },
+        timeout: 60000,
+      }, (res) => {
+        let data = ''
+        res.on('data', chunk => { data += chunk })
+        res.on('end', () => {
+          if (res.statusCode !== 200) {
+            resolve({ ok: false, status: res.statusCode, body: data.slice(0, 200) })
+            return
+          }
+          try {
+            const json = JSON.parse(data)
+            const text = json?.choices?.[0]?.message?.content || ''
+            resolve({ ok: true, text })
+          } catch {
+            resolve({ ok: true, text: data })
+          }
+        })
+      })
+      req.on('error', (err) => reject(err))
+      req.on('timeout', () => { req.destroy(); reject(new Error('Request timed out')) })
+      req.write(body)
+      req.end()
+    })
+  } catch (err) {
+    return { ok: false, error: err.message }
+  }
+})
+
 // ── stop-minecraft ────────────────────────────────────────────────────────────
 ipcMain.handle('stop-minecraft', async () => {
   if (mcProcess) {

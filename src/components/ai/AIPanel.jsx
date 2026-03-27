@@ -20,28 +20,41 @@ const MODES = [
   { id: 'fix',      label: 'Fix / Improve',  icon: <Zap size={12} /> },
 ]
 
-// ── Free AI (Pollinations OpenAI-compatible POST — CORS-safe) ────────────────
+// ── Free AI — routes through Electron IPC (no CORS) or Vite proxy in web ────
 async function callFreeAI(systemPrompt, userMessage, attachedImage, onChunk) {
   if (attachedImage?.isImage) {
     onChunk('[Free AI does not support image uploads — switch to Claude AI]\n\n')
   }
 
-  // Pollinations OpenAI-compatible endpoint — no API key needed, CORS allowed
-  const res = await fetch('https://text.pollinations.ai/openai', {
+  const sys = systemPrompt.slice(0, 2000)
+  const usr = userMessage.slice(0, 4000)
+
+  // ── Electron path: use Node.js in main process — zero CORS issues ──────────
+  if (window.electronAPI?.freeAIRequest) {
+    const result = await window.electronAPI.freeAIRequest({ systemPrompt: sys, userMessage: usr })
+    if (!result.ok) {
+      throw new Error(`Free AI error ${result.status || ''}${result.body ? ': ' + result.body : result.error || ''}`)
+    }
+    onChunk(result.text)
+    return result.text
+  }
+
+  // ── Web path: Vite proxy to avoid CORS ────────────────────────────────────
+  const res = await fetch('/pollinations-api/openai', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: 'openai',
       messages: [
-        { role: 'system', content: systemPrompt.slice(0, 2000) },
-        { role: 'user',   content: userMessage.slice(0, 4000) },
+        { role: 'system', content: sys },
+        { role: 'user',   content: usr },
       ],
     }),
   })
 
   if (!res.ok) {
     const body = await res.text().catch(() => '')
-    throw new Error(`Free AI error ${res.status}${body ? ': ' + body.slice(0, 120) : ''}`)
+    throw new Error(`Free AI error ${res.status}${body ? ': ' + body.slice(0, 150) : ''}`)
   }
 
   const data = await res.json()
