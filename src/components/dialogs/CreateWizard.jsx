@@ -291,6 +291,73 @@ const TYPES = [
   { id: 'block',       label: 'Block/Item Model', icon: '🧱', desc: 'JSON model for custom block/item' },
 ]
 
+// ── In-game recipe preview ────────────────────────────────────────────────────
+function RecipePreview({ recipeType, slots, result, resultCount }) {
+  const isSmelting = recipeType === 'smelting' || recipeType === 'smoking' || recipeType === 'blasting'
+  function ItemSlot({ item, big, label }) {
+    const mc = MC_ITEMS.find(i => i.id === item)
+    return (
+      <div style={{
+        width: big ? 56 : 40, height: big ? 56 : 40,
+        background: item ? '#8b8b8b' : '#6b6b6b',
+        border: '3px solid', borderColor: item ? '#fff #373737 #373737 #fff' : '#555 #888 #888 #555',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        flexDirection: 'column', position: 'relative', flexShrink: 0,
+      }}>
+        {item ? (
+          <>
+            <span style={{ fontSize: big ? 28 : 22, lineHeight: 1 }}>{mc?.emoji || '📦'}</span>
+            {big && resultCount > 1 && (
+              <span style={{ position: 'absolute', bottom: 2, right: 3, fontSize: 9,
+                color: '#fff', fontWeight: 700, textShadow: '1px 1px 0 #000' }}>{resultCount}</span>
+            )}
+          </>
+        ) : null}
+      </div>
+    )
+  }
+
+  if (isSmelting) {
+    const furnaceColors = { smelting: '#c87137', smoking: '#5a8c3c', blasting: '#888888' }
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+        <div style={{ color: '#aaa', fontSize: 10, marginBottom: 4 }}>
+          {recipeType.charAt(0).toUpperCase() + recipeType.slice(1)} Recipe Preview
+        </div>
+        <div style={{ background: '#3c3c3c', border: '3px solid #555', borderRadius: 4, padding: 16,
+          display: 'flex', alignItems: 'center', gap: 20 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+            <ItemSlot item={slots[0]} />
+            <div style={{ width: 40, height: 20, background: furnaceColors[recipeType] || '#c87137',
+              border: '2px solid #555', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 12 }}>🔥</div>
+          </div>
+          <div style={{ color: '#ccc', fontSize: 20 }}>→</div>
+          <ItemSlot item={result} big />
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+      <div style={{ color: '#aaa', fontSize: 10, marginBottom: 4 }}>Crafting Table Preview</div>
+      <div style={{ background: '#c6a876', border: '3px solid #8b7355', borderRadius: 4, padding: 12,
+        display: 'flex', alignItems: 'center', gap: 16 }}>
+        {/* Crafting grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 40px)', gap: 3,
+          background: '#8b7355' }}>
+          {Array.from({ length: 9 }).map((_, i) => (
+            <ItemSlot key={i} item={slots[i]} />
+          ))}
+        </div>
+        <div style={{ color: '#5a3e1b', fontSize: 24 }}>→</div>
+        <ItemSlot item={result} big resultCount={parseInt(resultCount) || 1} />
+      </div>
+    </div>
+  )
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 export default function CreateWizard({ onClose }) {
   const { project, createFile, showToast } = useStore()
@@ -317,9 +384,14 @@ export default function CreateWizard({ onClose }) {
   const [parent, setParent]   = useState('')
   const [texture, setTexture] = useState('')
 
+  // Result step state
+  const [generatedPath, setGeneratedPath] = useState('')
+  const [generatedContent, setGeneratedContent] = useState('')
+  const [showPreview, setShowPreview] = useState(false)
+
   // Item picker state
   const [pickerOpen, setPickerOpen] = useState(false)
-  const [pickerTarget, setPickerTarget] = useState(null) // { kind: 'slot'|'result', index }
+  const [pickerTarget, setPickerTarget] = useState(null)
 
   const ns  = project?.namespace || 'my_namespace'
   const dp  = project?.datpackRoot || ns + '_datapack'
@@ -345,7 +417,7 @@ export default function CreateWizard({ onClose }) {
     setPickerOpen(false)
   }
 
-  function create() {
+  function generate() {
     const safeName = (name || 'unnamed').replace(/\s+/g, '_').toLowerCase()
     let filePath = '', content = ''
 
@@ -375,12 +447,20 @@ export default function CreateWizard({ onClose }) {
     }
 
     if (!filePath) return
-    createFile(filePath, content)
-    showToast(`Created ${filePath.split('/').pop()}`, 'success')
+    setGeneratedPath(filePath)
+    setGeneratedContent(content)
+    setShowPreview(false)
+    setStep('result')
+  }
+
+  function saveToProject() {
+    createFile(generatedPath, generatedContent)
+    showToast(`Created ${generatedPath.split('/').pop()}`, 'success')
     onClose()
   }
 
   const canCreate = name.trim().length > 0
+  const canPreview = type === 'recipe'
 
   // ── Step: pick type ──────────────────────────────────────────────────────
   if (step === 'pick') return (
@@ -545,7 +625,7 @@ export default function CreateWizard({ onClose }) {
               onMouseLeave={e => e.currentTarget.style.borderColor = '#1a3050'}>
               Cancel
             </button>
-            <button onClick={create} disabled={!canCreate}
+            <button onClick={generate} disabled={!canCreate}
               style={{ flex: 2, padding: '10px 0', borderRadius: 8, border: 'none',
                 background: canCreate ? 'linear-gradient(135deg,#2563eb,#1d4ed8)' : '#1a3050',
                 color: canCreate ? '#fff' : '#334155', fontSize: 13, fontWeight: 700,
@@ -565,4 +645,85 @@ export default function CreateWizard({ onClose }) {
       {pickerOpen && <ItemPicker onPick={handlePick} onClose={() => setPickerOpen(false)} />}
     </>
   )
+
+  // ── Step: result (show code + preview) ──────────────────────────────────
+  if (step === 'result') {
+    const fileName = generatedPath.split('/').pop()
+    return (
+      <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.8)',
+        backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ background: '#07111f', border: '1px solid #1a3050', borderRadius: 14,
+          padding: 28, width: 560, maxWidth: '95vw', maxHeight: '90vh', display: 'flex',
+          flexDirection: 'column', boxShadow: '0 0 60px rgba(37,99,235,0.15)' }}>
+
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+            <button onClick={() => setStep('form')}
+              style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: 18 }}>←</button>
+            <span style={{ fontSize: 20 }}>{TYPES.find(t => t.id === type)?.icon}</span>
+            <h2 style={{ color: '#e2e8f0', fontSize: 15, fontWeight: 700, margin: 0 }}>{fileName}</h2>
+            <div style={{ flex: 1 }} />
+            <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: 20 }}>✕</button>
+          </div>
+
+          {/* Toggle tabs */}
+          <div style={{ display: 'flex', gap: 0, marginBottom: 12, background: '#0b1525',
+            borderRadius: 8, padding: 3, border: '1px solid #1a3050' }}>
+            <button onClick={() => setShowPreview(false)}
+              style={{ flex: 1, padding: '7px 0', borderRadius: 6, border: 'none', fontSize: 12, fontWeight: 600,
+                cursor: 'pointer', background: !showPreview ? '#2563eb' : 'transparent',
+                color: !showPreview ? '#fff' : '#64748b', transition: 'all 0.15s' }}>
+              { } Code
+            </button>
+            {canPreview && (
+              <button onClick={() => setShowPreview(true)}
+                style={{ flex: 1, padding: '7px 0', borderRadius: 6, border: 'none', fontSize: 12, fontWeight: 600,
+                  cursor: 'pointer', background: showPreview ? '#2563eb' : 'transparent',
+                  color: showPreview ? '#fff' : '#64748b', transition: 'all 0.15s' }}>
+                🎮 Preview
+              </button>
+            )}
+          </div>
+
+          {/* Content area */}
+          <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+            {!showPreview ? (
+              <pre style={{ margin: 0, background: '#030c18', border: '1px solid #1a3050', borderRadius: 8,
+                padding: 16, color: '#93c5fd', fontSize: 12, fontFamily: 'monospace',
+                overflowX: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                {generatedContent}
+              </pre>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center',
+                minHeight: 200, background: '#030c18', border: '1px solid #1a3050', borderRadius: 8, padding: 24 }}>
+                <RecipePreview recipeType={recipeType} slots={slots} result={result} resultCount={resultCount} />
+              </div>
+            )}
+          </div>
+
+          {/* Path hint */}
+          <p style={{ color: '#334155', fontSize: 10, marginTop: 8, fontFamily: 'monospace', margin: '8px 0 12px' }}>
+            {generatedPath}
+          </p>
+
+          {/* Action buttons */}
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button onClick={() => setStep('form')}
+              style={{ flex: 1, padding: '10px 0', borderRadius: 8, background: 'transparent',
+                border: '1px solid #1a3050', color: '#64748b', fontSize: 13, cursor: 'pointer' }}
+              onMouseEnter={e => e.currentTarget.style.borderColor = '#2563eb'}
+              onMouseLeave={e => e.currentTarget.style.borderColor = '#1a3050'}>
+              ← Edit
+            </button>
+            <button onClick={saveToProject}
+              style={{ flex: 2, padding: '10px 0', borderRadius: 8, border: 'none',
+                background: 'linear-gradient(135deg,#16a34a,#15803d)',
+                color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+              💾 Save to Project
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 }
