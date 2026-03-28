@@ -3,7 +3,7 @@ name: Build & Release Ferrum
 on:
   push:
     tags:
-      - 'v*'          # triggers on any tag like v0.2.0, v1.0.0, etc.
+      - 'v*'
 
 jobs:
   build-windows:
@@ -22,17 +22,10 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build & package EXE
-        run: npm run electron:build
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}   # lets electron-builder upload to the release
+      - name: Build Vite
+        run: npm run build
 
-      - name: Upload release assets
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            release/**/*.exe
-            release/**/*.yml
-            release/**/*.blockmap
+      - name: Package EXE and publish to GitHub Release
+        run: npx electron-builder --win --publish always
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
