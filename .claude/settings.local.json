@@ -49,7 +49,19 @@
       "Bash(powershell.exe -NoProfile -Command \"Set-Location \"\"C:\\\\Users\\\\leojo_seszrpr\\\\Downloads\\\\steel''s datapack editor\"\"; & ''C:\\\\Program Files\\\\nodejs\\\\node.exe'' scripts/download-textures.mjs\")",
       "Bash(powershell.exe -NoProfile -Command \"Set-Location \"\"C:\\\\Users\\\\leojo_seszrpr\\\\Downloads\\\\steel''s datapack editor\"\"; & ''C:\\\\Program Files\\\\nodejs\\\\npm.cmd'' run electron:build\")",
       "Bash(powershell.exe -NoProfile -Command \"Set-Location \"\"C:\\\\Users\\\\leojo_seszrpr\\\\Downloads\\\\steel''s datapack editor\"\"; & ''C:\\\\Program Files\\\\nodejs\\\\node.exe'' scripts/download-textures-complete.mjs\")",
-      "Bash(powershell.exe -NoProfile -Command \"Get-Process | Where-Object { $_.Name -like ''*Ferrum*'' -or $_.Name -like ''*electron*'' } | Stop-Process -Force -ErrorAction SilentlyContinue; Write-Host ''Killed''\")"
+      "Bash(powershell.exe -NoProfile -Command \"Get-Process | Where-Object { $_.Name -like ''*Ferrum*'' -or $_.Name -like ''*electron*'' } | Stop-Process -Force -ErrorAction SilentlyContinue; Write-Host ''Killed''\")",
+      "Bash(curl -s \"https://api.github.com/repos/steel345/ferrum/releases/latest\")",
+      "Bash(curl -s https://api.github.com/repos/steel345/ferrum/releases)",
+      "Bash(python3 -c \"import sys,json; releases=json.load\\(sys.stdin\\); [print\\(r[''''tag_name''''], ''''|'''', [a[''''name''''] for a in r[''''assets'''']]\\) for r in releases[:5]]\")",
+      "Bash(curl -s \"https://api.github.com/repos/steel345/ferrum/releases\" -o C:Tempreleases.json)",
+      "Bash(findstr /C:\"tag_name\")",
+      "Bash(curl -v \"https://api.github.com/repos/steel345/ferrum/releases\")",
+      "Bash(npm run:*)",
+      "Bash(cmd /c \"cd \"\"C:\\\\Users\\\\leojo_seszrpr\\\\Downloads\\\\steel''s datapack editor\"\" && npm run build 2>&1\")",
+      "Bash(cmd /c \"cd /d \"\"C:\\\\Users\\\\leojo_seszrpr\\\\Downloads\\\\steel''s datapack editor\"\" && npm run build\")",
+      "Bash(cmd /c \"cd /d \"\"C:\\\\Users\\\\leojo_seszrpr\\\\Downloads\\\\steel''s datapack editor\"\" && npm run build 2>&1 && echo BUILD_SUCCESS || echo BUILD_FAILED\")",
+      "Bash(powershell -Command \"Set-Location \"\"C:\\\\Users\\\\leojo_seszrpr\\\\Downloads\\\\steel''s datapack editor\"\"; $result = & npm run build 2>&1; Write-Output $result; if \\($LASTEXITCODE -eq 0\\) { ''BUILD_SUCCESS'' } else { ''BUILD_FAILED'' }\")",
+      "Bash(powershell -Command \"Set-Location ''C:\\\\Users\\\\leojo_seszrpr\\\\Downloads\\\\steel''''s datapack editor''; npm run build; exit $LASTEXITCODE\")"
     ]
   }
 }
