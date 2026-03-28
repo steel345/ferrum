@@ -211,26 +211,88 @@ function EditorLoading() {
 }
 
 // ── mcfunction linter ─────────────────────────────────────────────────────────
+const VALID_SELECTORS = new Set(['@a', '@e', '@p', '@r', '@s'])
+
+function addMarker(markers, i, line, startCol, endCol, message, severity) {
+  markers.push({ severity, message, startLineNumber: i + 1, startColumn: startCol, endLineNumber: i + 1, endColumn: endCol })
+}
+
 function lintMcfunction(model, monaco) {
   const lines = model.getLinesContent()
   const markers = []
+  const Err  = monaco.MarkerSeverity.Error
+  const Warn = monaco.MarkerSeverity.Warning
+
   lines.forEach((line, i) => {
     const trimmed = line.trim()
     if (!trimmed || trimmed.startsWith('#')) return
+
     // Strip macro prefix ($) — valid in 1.20.2+
     const stripped = trimmed.startsWith('$') ? trimmed.slice(1).trim() : trimmed
-    const firstWord = stripped.split(/\s+/)[0].toLowerCase()
+    const tokens   = stripped.split(/\s+/)
+    const firstWord = tokens[0].toLowerCase()
     if (!firstWord) return
+
+    // ── 1. Unknown command name ──────────────────────────────────────────────
     if (!MC_COMMANDS.includes(firstWord)) {
       const col = line.indexOf(firstWord) + 1
-      markers.push({
-        severity: monaco.MarkerSeverity.Error,
-        message: `Unknown command: "${firstWord}". Check spelling or Minecraft version.`,
-        startLineNumber: i + 1, startColumn: col,
-        endLineNumber: i + 1,   endColumn: col + firstWord.length,
-      })
+      addMarker(markers, i, line, col, col + firstWord.length,
+        `Unknown command: "${firstWord}". Check spelling or Minecraft version.`, Err)
+      return // no point checking args if command itself is wrong
+    }
+
+    // ── 2. Unbalanced braces / brackets ──────────────────────────────────────
+    let curly = 0, square = 0
+    let inStr = false, strChar = ''
+    for (let ci = 0; ci < line.length; ci++) {
+      const ch = line[ci]
+      if (inStr) { if (ch === strChar) inStr = false; continue }
+      if (ch === '"' || ch === "'") { inStr = true; strChar = ch; continue }
+      if (ch === '{') curly++
+      else if (ch === '}') curly--
+      else if (ch === '[') square++
+      else if (ch === ']') square--
+    }
+    if (curly !== 0) {
+      addMarker(markers, i, line, 1, line.length + 1,
+        `Unbalanced curly braces {} on this line (${curly > 0 ? 'missing }' : 'extra }'}).`, Err)
+    }
+    if (square !== 0) {
+      addMarker(markers, i, line, 1, line.length + 1,
+        `Unbalanced square brackets [] on this line (${square > 0 ? 'missing ]' : 'extra ]'}).`, Err)
+    }
+
+    // ── 3. Invalid target selectors (@x where x isn't a/e/p/r/s) ────────────
+    const selectorMatches = [...line.matchAll(/@([a-zA-Z])/g)]
+    for (const m of selectorMatches) {
+      const sel = m[0]  // e.g. "@q"
+      if (!VALID_SELECTORS.has(sel.slice(0, 2))) {
+        const col = m.index + 1
+        addMarker(markers, i, line, col, col + 2,
+          `Invalid target selector "${sel}". Valid selectors: @a, @e, @p, @r, @s.`, Err)
+      }
+    }
+
+    // ── 4. Resource locations missing colon (e.g. "minecraft stone" instead of "minecraft:stone") ──
+    // Look for two consecutive words that look like they should be namespace:path
+    const resLocBad = [...line.matchAll(/\b(minecraft|the_end|overworld|nether)\s+([a-z_]+)\b/g)]
+    for (const m of resLocBad) {
+      const col = m.index + 1
+      addMarker(markers, i, line, col, col + m[0].length,
+        `Missing colon in resource location? Did you mean "${m[1]}:${m[2]}"?`, Warn)
+    }
+
+    // ── 5. execute … missing "run" at end ─────────────────────────────────────
+    if (firstWord === 'execute') {
+      // Only flag if the line doesn't contain "run" anywhere after "execute"
+      const afterExecute = stripped.slice('execute'.length).trim()
+      if (afterExecute.length > 0 && !/\brun\b/.test(afterExecute)) {
+        addMarker(markers, i, line, 1, line.length + 1,
+          'execute command is missing "run" — add "run <command>" at the end.', Warn)
+      }
     }
   })
+
   monaco.editor.setModelMarkers(model, 'ferrum-mcfunction', markers)
 }
 
