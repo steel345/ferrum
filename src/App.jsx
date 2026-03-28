@@ -1,4 +1,4 @@
-import React, { useRef, useCallback } from 'react'
+import React, { useRef, useCallback, useEffect } from 'react'
 import useStore from './store/useStore'
 
 // ── Error Boundary ────────────────────────────────────────────────────────────
@@ -54,6 +54,19 @@ import ActivityBar from './components/layout/ActivityBar'
 
 export default function App() {
   const { project, dialogs, sidebarWidth, rightPanelWidth, setSidebarWidth, setRightPanelWidth } = useStore()
+
+  // ── Auto-save on window close ────────────────────────────────────────────
+  useEffect(() => {
+    if (!window.electronAPI?.onBeforeClose) return
+    window.electronAPI.onBeforeClose(() => {
+      const { project: p, saveCurrentProject } = useStore.getState()
+      if (p) saveCurrentProject()
+      // Give 600ms for async IPC save to disk to complete, then close
+      setTimeout(() => {
+        if (window.electronAPI?.closeReady) window.electronAPI.closeReady()
+      }, 600)
+    })
+  }, [])
 
   // ── Sidebar resize ──────────────────────────────────────────────────────
   const sidebarDrag = useRef(false)

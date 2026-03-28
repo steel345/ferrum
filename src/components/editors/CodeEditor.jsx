@@ -47,6 +47,11 @@ function setupMonaco(monaco) {
       'scrollbarSlider.background':            '#1a3050',
       'scrollbarSlider.hoverBackground':       '#2563eb',
       'minimap.background':                    '#040810',
+      'editorError.foreground':                '#f87171',
+      'editorError.border':                    '#ef4444',
+      'editorWarning.foreground':              '#fbbf24',
+      'editorGutter.background':               '#060c18',
+      'editorMarkerNavigationError.background':'#7f1d1d',
     },
   })
 
@@ -205,6 +210,30 @@ function EditorLoading() {
   )
 }
 
+// ── mcfunction linter ─────────────────────────────────────────────────────────
+function lintMcfunction(model, monaco) {
+  const lines = model.getLinesContent()
+  const markers = []
+  lines.forEach((line, i) => {
+    const trimmed = line.trim()
+    if (!trimmed || trimmed.startsWith('#')) return
+    // Strip macro prefix ($) — valid in 1.20.2+
+    const stripped = trimmed.startsWith('$') ? trimmed.slice(1).trim() : trimmed
+    const firstWord = stripped.split(/\s+/)[0].toLowerCase()
+    if (!firstWord) return
+    if (!MC_COMMANDS.includes(firstWord)) {
+      const col = line.indexOf(firstWord) + 1
+      markers.push({
+        severity: monaco.MarkerSeverity.Error,
+        message: `Unknown command: "${firstWord}". Check spelling or Minecraft version.`,
+        startLineNumber: i + 1, startColumn: col,
+        endLineNumber: i + 1,   endColumn: col + firstWord.length,
+      })
+    }
+  })
+  monaco.editor.setModelMarkers(model, 'ferrum-mcfunction', markers)
+}
+
 export default function CodeEditor({ path }) {
   const { files, updateFile, saveFile, settings } = useStore()
   const content = files[path] ?? ''
@@ -215,12 +244,21 @@ export default function CodeEditor({ path }) {
     setupMonaco(monaco)
   }
 
-  // onMount: editor instance is ready — wire up Ctrl+S and focus
+  // onMount: editor instance is ready — wire up Ctrl+S, focus, and linting
   function handleMount(editor, monaco) {
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
       saveFile(path)
     })
     editor.focus()
+
+    // Run mcfunction linting on mount + every content change
+    if (language === 'mcfunction') {
+      const model = editor.getModel()
+      if (model) {
+        lintMcfunction(model, monaco)
+        editor.onDidChangeModelContent(() => lintMcfunction(model, monaco))
+      }
+    }
   }
 
   function handleChange(value) {

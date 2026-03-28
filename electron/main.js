@@ -51,6 +51,20 @@ function createWindow() {
 
   mainWindow.once('ready-to-show', () => mainWindow.show())
 
+  // ── Intercept close to auto-save first ────────────────────────────────────
+  mainWindow._allowClose = false
+
+  mainWindow.on('close', (e) => {
+    if (mainWindow._allowClose) return
+    e.preventDefault()
+    mainWindow.webContents.send('app-before-close')
+    // Fallback: force-close after 3s if renderer doesn't respond
+    mainWindow._closeTimer = setTimeout(() => {
+      mainWindow._allowClose = true
+      mainWindow.close()
+    }, 3000)
+  })
+
   mainWindow.on('closed', () => { mainWindow = null })
 }
 
@@ -85,6 +99,16 @@ ipcMain.on('window-maximize', () => {
   else mainWindow.maximize()
 })
 ipcMain.on('window-close', () => { if (mainWindow) mainWindow.close() })
+
+// ── close-ready: renderer finished saving, now actually close ─────────────────
+ipcMain.handle('close-ready', () => {
+  // Find the close vars via mainWindow closure — just set a global flag
+  if (mainWindow) {
+    mainWindow._allowClose = true
+    if (mainWindow._closeTimer) { clearTimeout(mainWindow._closeTimer); mainWindow._closeTimer = null }
+    mainWindow.close()
+  }
+})
 
 // ── open-in-explorer ──────────────────────────────────────────────────────────
 ipcMain.handle('open-in-explorer', async (event, { filePath, content }) => {

@@ -37,6 +37,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // ── Shell / Explorer ─────────────────────────────────────────────────────
   openInExplorer: (opts) => ipcRenderer.invoke('open-in-explorer', opts),
 
+  // ── Auto-save on close ────────────────────────────────────────────────────
+  onBeforeClose: (cb) => ipcRenderer.on('app-before-close', () => cb()),
+  closeReady: () => ipcRenderer.invoke('close-ready'),
+
   // ── Identity flag ─────────────────────────────────────────────────────────
   isElectron: true,
 })
