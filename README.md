@@ -29,7 +29,7 @@ Generate datapack code directly from a text prompt:
 
 ### 📦 Asset Browser
 - Search and insert any Minecraft item, block, or entity instantly
-- **780+ items and blocks** across all categories: Tools, Armor, Food, Combat, Blocks, Nature, Nether, End, Redstone, Wood, Stone, Wool, Concrete, Terracotta, Glazed Terracotta, Concrete Powder, Dyes, Glass, Beds, Carpets, Banners, Candles, Signs, Skulls, Ice & Snow, Prismarine, Pottery, Smithing Templates, Spawn Eggs, Music Discs, Copper, and more
+- **1500+ items and blocks** across all categories: Tools, Armor, Food, Combat, Blocks, Nature, Nether, End, Redstone, Wood, Stone, Wool, Concrete, Terracotta, Glazed Terracotta, Concrete Powder, Dyes, Glass, Beds, Carpets, Banners, Candles, Signs, Skulls, Ice & Snow, Prismarine, Pottery, Smithing Templates, Spawn Eggs, Music Discs, Copper, and more
 - Click to copy ID — double-click to insert into the active file
 
 ### 🔗 Linked Workspaces
