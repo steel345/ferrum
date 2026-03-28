@@ -148,16 +148,35 @@ function TreeNode({ node, depth }) {
           </>
         )}
         {renaming ? (
-          <input
-            autoFocus
-            className="input text-xs py-0 px-1 h-5"
-            style={{ flex: 1, minWidth: 0 }}
-            value={newName}
-            onChange={e => setNewName(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') setRenaming(false) }}
-            onBlur={commitRename}
-            onClick={e => e.stopPropagation()}
-          />
+          <div style={{ display: 'flex', alignItems: 'center', flex: 1, gap: 3 }} onClick={e => e.stopPropagation()}>
+            <input
+              autoFocus
+              className="input text-xs py-0 px-1"
+              style={{ flex: 1, minWidth: 0, height: 20 }}
+              value={newName}
+              onChange={e => setNewName(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') setRenaming(false) }}
+            />
+            {/* mouseDown preventDefault stops input blur before click fires */}
+            <button
+              onMouseDown={e => e.preventDefault()}
+              onClick={commitRename}
+              title="Done"
+              style={{
+                background: '#16a34a', border: 'none', borderRadius: 3, color: '#fff',
+                fontSize: 10, padding: '1px 5px', cursor: 'pointer', flexShrink: 0, fontWeight: 700,
+              }}
+            >✓</button>
+            <button
+              onMouseDown={e => e.preventDefault()}
+              onClick={() => setRenaming(false)}
+              title="Cancel"
+              style={{
+                background: '#dc2626', border: 'none', borderRadius: 3, color: '#fff',
+                fontSize: 10, padding: '1px 5px', cursor: 'pointer', flexShrink: 0, fontWeight: 700,
+              }}
+            >✕</button>
+          </div>
         ) : (
           <span className="truncate text-xs" style={{ flex: 1 }}>{node.name}</span>
         )}
