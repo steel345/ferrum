@@ -61,7 +61,18 @@
       "Bash(cmd /c \"cd /d \"\"C:\\\\Users\\\\leojo_seszrpr\\\\Downloads\\\\steel''s datapack editor\"\" && npm run build\")",
       "Bash(cmd /c \"cd /d \"\"C:\\\\Users\\\\leojo_seszrpr\\\\Downloads\\\\steel''s datapack editor\"\" && npm run build 2>&1 && echo BUILD_SUCCESS || echo BUILD_FAILED\")",
       "Bash(powershell -Command \"Set-Location \"\"C:\\\\Users\\\\leojo_seszrpr\\\\Downloads\\\\steel''s datapack editor\"\"; $result = & npm run build 2>&1; Write-Output $result; if \\($LASTEXITCODE -eq 0\\) { ''BUILD_SUCCESS'' } else { ''BUILD_FAILED'' }\")",
-      "Bash(powershell -Command \"Set-Location ''C:\\\\Users\\\\leojo_seszrpr\\\\Downloads\\\\steel''''s datapack editor''; npm run build; exit $LASTEXITCODE\")"
+      "Bash(powershell -Command \"Set-Location ''C:\\\\Users\\\\leojo_seszrpr\\\\Downloads\\\\steel''''s datapack editor''; npm run build; exit $LASTEXITCODE\")",
+      "Bash(curl -s \"https://api.github.com/repos/steel345/ferrum/actions/runs?per_page=5\")",
+      "Bash(curl -s \"https://api.github.com/repos/steel345/ferrum/actions/runs?per_page=3\")",
+      "Bash(curl -s https://api.github.com/repos/steel345/ferrum/actions/runs?per_page=5)",
+      "Read(//tmp/**)",
+      "Bash(curl -s \"https://api.github.com/repos/steel345/ferrum/actions/runs\" -o /tmp/gh_runs.txt)",
+      "Bash(curl -s \"https://api.github.com/repos/steel345/ferrum/releases?per_page=10\" -o /tmp/releases.txt)",
+      "Bash(curl -s \"https://api.github.com/repos/steel345/ferrum/releases?per_page=10&draft=true\" -o /tmp/drafts.txt)",
+      "Bash(curl -s -H \"Accept: application/vnd.github+json\" \"https://api.github.com/repos/steel345/ferrum/tags\")",
+      "Bash(grep -o '[0-9]\\\\{10,\\\\}')",
+      "Bash(curl -s https://api.github.com/repos/steel345/ferrum/actions/runs/23685515780/logs -L -o /tmp/run_logs.zip)",
+      "Bash(unzip -l /tmp/run_logs.zip)"
     ]
   }
 }

@@ -11,7 +11,7 @@ permissions:
 jobs:
   build-windows:
     runs-on: windows-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     steps:
       - name: Checkout code
@@ -21,6 +21,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm install --legacy-peer-deps
@@ -30,8 +31,34 @@ jobs:
         env:
           NODE_OPTIONS: --max-old-space-size=4096
 
-      - name: Build Electron EXE
-        run: npx electron-builder --win --publish always
+      - name: Build Electron EXE (no publish)
+        run: npx electron-builder --win --x64
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_OPTIONS: --max-old-space-size=4096
+
+      - name: List release folder
+        run: dir release /s /b
+        shell: cmd
+
+      - name: Publish to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Ferrum ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          generate_release_notes: false
+          body: |
+            ## Ferrum ${{ github.ref_name }}
+
+            ### Install
+            - **Installer**: Download `Ferrum-Setup-*.exe` and run it
+            - **Portable**: Download `Ferrum-*.exe` (no install needed)
+
+            > Auto-update is built in — future versions will update silently.
+          files: |
+            release/*.exe
+            release/latest.yml
+            release/*.blockmap
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
