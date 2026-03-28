@@ -298,39 +298,54 @@ ipcMain.handle('launch-minecraft', async (event, { mcDir, version, datapackFiles
     const separator = process.platform === 'win32' ? ';' : ':'
     const classpath = classpathEntries.join(separator)
 
-    // 4. Create temp game directory
-    const gameDir = path.join(app.getPath('userData'), 'ferrum_test', version)
+    // 4. Per-project isolated game directory — each project gets its own MC instance
+    const namespace = projectNamespace || 'ferrum_pack'
+    const safeName = namespace.replace(/[^a-zA-Z0-9_]/g, '_')
+    const gameDir = path.join(app.getPath('userData'), 'ferrum_projects', safeName, version)
     fs.mkdirSync(gameDir, { recursive: true })
 
-    // 5. Write datapack files into every valid world (has level.dat) + a fallback world
-    const namespace = projectNamespace || 'ferrum_pack'
+    // 5. Dedicated world for this project — named after the project
+    const worldName = `Ferrum_${safeName}`
     const savesDir = path.join(gameDir, 'saves')
-    fs.mkdirSync(savesDir, { recursive: true })
+    const worldDir = path.join(savesDir, worldName)
+    fs.mkdirSync(worldDir, { recursive: true })
 
-    // Collect existing valid worlds (have a level.dat)
-    let validWorlds = []
-    if (fs.existsSync(savesDir)) {
-      for (const entry of fs.readdirSync(savesDir)) {
-        const levelDat = path.join(savesDir, entry, 'level.dat')
-        if (fs.existsSync(levelDat)) validWorlds.push(entry)
+    // If world has no level.dat yet, copy one from the user's .minecraft/saves
+    // so MC can auto-load it directly. Falls back to prompting the user.
+    const levelDatDest = path.join(worldDir, 'level.dat')
+    let worldReady = fs.existsSync(levelDatDest)
+    if (!worldReady) {
+      const mcSavesDir = path.join(mcDir, 'saves')
+      if (fs.existsSync(mcSavesDir)) {
+        const userWorlds = fs.readdirSync(mcSavesDir)
+          .filter(w => {
+            try { return fs.existsSync(path.join(mcSavesDir, w, 'level.dat')) } catch { return false }
+          })
+        if (userWorlds.length > 0) {
+          // Use most recently played world as template
+          let newest = 0, srcWorld = userWorlds[0]
+          for (const w of userWorlds) {
+            const t = fs.statSync(path.join(mcSavesDir, w, 'level.dat')).mtimeMs
+            if (t > newest) { newest = t; srcWorld = w }
+          }
+          try {
+            fs.copyFileSync(path.join(mcSavesDir, srcWorld, 'level.dat'), levelDatDest)
+            const iconSrc = path.join(mcSavesDir, srcWorld, 'icon.png')
+            if (fs.existsSync(iconSrc)) fs.copyFileSync(iconSrc, path.join(worldDir, 'icon.png'))
+            worldReady = true
+            send(`[Ferrum] Created isolated world "${worldName}" for project "${safeName}"`)
+          } catch (_) {}
+        }
+      }
+      if (!worldReady) {
+        send(`[Ferrum] ⚠  No existing world found to use as template.`)
+        send(`[Ferrum] ⚠  Launch MC, create any world, then click Play in Ferrum again.`)
       }
     }
-    // If no worlds exist yet, we'll create one below after first launch — use placeholder
-    if (validWorlds.length === 0) validWorlds = ['Ferrum_Test']
 
-    // Pick the world to auto-load (most recently modified level.dat, or first)
-    let targetWorld = validWorlds[0]
-    if (validWorlds.length > 1) {
-      let newest = 0
-      for (const w of validWorlds) {
-        const t = fs.statSync(path.join(savesDir, w, 'level.dat')).mtimeMs
-        if (t > newest) { newest = t; targetWorld = w }
-      }
-    }
-
-    // Write datapacks into every valid world so it works no matter which world user loads
-    function writeDatapackToWorld(worldName) {
-      const dpDir = path.join(savesDir, worldName, 'datapacks', namespace)
+    // Write datapacks ONLY to this project's dedicated world
+    function writeDatapackToWorld() {
+      const dpDir = path.join(worldDir, 'datapacks', safeName)
       fs.mkdirSync(dpDir, { recursive: true })
       if (!datapackFiles || typeof datapackFiles !== 'object') return
       const dpRoot = projectDatapackRoot || ''
@@ -347,8 +362,9 @@ ipcMain.handle('launch-minecraft', async (event, { mcDir, version, datapackFiles
       }
     }
 
-    for (const w of validWorlds) writeDatapackToWorld(w)
-    send(`[Ferrum] Datapack written to ${validWorlds.length} world(s). Auto-loading: ${targetWorld}`)
+    writeDatapackToWorld()
+    send(`[Ferrum] Datapack written → saves/${worldName}/datapacks/${safeName}/`)
+    const targetWorld = worldName
 
     // 6. Build launch arguments
     const mainClass = versionData.mainClass || 'net.minecraft.client.main.Main'
