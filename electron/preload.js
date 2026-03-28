@@ -34,6 +34,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // ── Free AI (CORS-free via Node.js) ──────────────────────────────────────
   freeAIRequest: (opts) => ipcRenderer.invoke('free-ai-request', opts),
 
+  // ── Shell / Explorer ─────────────────────────────────────────────────────
+  openInExplorer: (opts) => ipcRenderer.invoke('open-in-explorer', opts),
+
   // ── Identity flag ─────────────────────────────────────────────────────────
   isElectron: true,
 })

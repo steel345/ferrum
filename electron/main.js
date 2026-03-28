@@ -86,6 +86,20 @@ ipcMain.on('window-maximize', () => {
 })
 ipcMain.on('window-close', () => { if (mainWindow) mainWindow.close() })
 
+// ── open-in-explorer ──────────────────────────────────────────────────────────
+ipcMain.handle('open-in-explorer', async (event, { filePath, content }) => {
+  try {
+    const tempDir = path.join(os.tmpdir(), 'ferrum_explorer')
+    const fullPath = path.join(tempDir, filePath.replace(/\//g, path.sep))
+    fs.mkdirSync(path.dirname(fullPath), { recursive: true })
+    fs.writeFileSync(fullPath, typeof content === 'string' ? content : JSON.stringify(content, null, 2), 'utf8')
+    shell.showItemInFolder(fullPath)
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: e.message }
+  }
+})
+
 // ── detect-minecraft ──────────────────────────────────────────────────────────
 ipcMain.handle('detect-minecraft', async () => {
   const candidates = []

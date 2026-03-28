@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import useStore from '../../store/useStore'
 import { buildFileTree, getFileIcon, getFileType, isGitkeep } from '../../utils/scaffoldUtils'
-import { ChevronRight, ChevronDown, Plus, Trash2, FilePlus, FolderPlus, Edit3, Pencil } from 'lucide-react'
+import { ChevronRight, ChevronDown, Plus, Trash2, FilePlus, FolderPlus, Edit3, Pencil, FolderOpen } from 'lucide-react'
 
 function FileIcon({ path }) {
   const type = getFileType(path)
@@ -39,7 +39,7 @@ function FolderIcon({ expanded, name }) {
 }
 
 function TreeNode({ node, depth }) {
-  const { openFile, activeTab, sidebarExpanded, toggleFolder, deleteFile, createFile, renameFile, dirtyFiles } = useStore()
+  const { openFile, activeTab, sidebarExpanded, toggleFolder, deleteFile, createFile, renameFile, dirtyFiles, files } = useStore()
   const [contextMenu, setContextMenu] = useState(null)
   const [renaming, setRenaming] = useState(false)
   const [newName, setNewName] = useState(node.name)
@@ -87,6 +87,14 @@ function TreeNode({ node, depth }) {
     closeCtx()
     setNewName(node.name)
     setRenaming(true)
+  }
+
+  function handleOpenInExplorer() {
+    closeCtx()
+    const content = files[node.path] ?? ''
+    if (window.electronAPI?.openInExplorer) {
+      window.electronAPI.openInExplorer({ filePath: node.path, content })
+    }
   }
 
   function commitRename() {
@@ -175,6 +183,11 @@ function TreeNode({ node, depth }) {
             <div className="context-menu-item" onClick={handleRename}>
               <Pencil size={13} /> Rename
             </div>
+            {window.electronAPI?.openInExplorer && (
+              <div className="context-menu-item" onClick={handleOpenInExplorer}>
+                <FolderOpen size={13} /> Open in Explorer
+              </div>
+            )}
             {node.type === 'file' && (
               <>
                 <div className="context-menu-divider" />
