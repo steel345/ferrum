@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState, useCallback } from 'react'
 import useStore from '../../store/useStore'
 
 // ── Minecraft chat colors ─────────────────────────────────────────────────────
@@ -45,7 +45,6 @@ function RecipePreview({ data }) {
       textAlign:'center', lineHeight:1.2, wordBreak:'break-all', padding:2, cursor:'default' }
   }
 
-  // Shaped: build 3x3 grid
   if (isShaped && data.pattern && data.key) {
     const rows = data.pattern.map(row => row.split(''))
     while (rows.length < 3) rows.push(['','',''])
@@ -53,7 +52,7 @@ function RecipePreview({ data }) {
     return (
       <div style={{ fontFamily:'monospace' }}>
         <div style={{ color:'#4ade80', fontSize:11, marginBottom:10, fontWeight:700 }}>
-          🔨 Shaped Recipe — {data.type?.split(':')[1] || 'crafting_shaped'}
+          Shaped Recipe — {data.type?.split(':')[1] || 'crafting_shaped'}
         </div>
         <div style={{ display:'flex', gap:16, alignItems:'center', flexWrap:'wrap' }}>
           <div style={{ display:'grid', gridTemplateColumns:'repeat(3,44px)', gap:3 }}>
@@ -73,13 +72,12 @@ function RecipePreview({ data }) {
     )
   }
 
-  // Shapeless
   if (isShapeless && data.ingredients) {
     const ing = data.ingredients.slice(0,9)
     return (
       <div>
         <div style={{ color:'#4ade80', fontSize:11, marginBottom:10, fontWeight:700 }}>
-          🔀 Shapeless Recipe
+          Shapeless Recipe
         </div>
         <div style={{ display:'flex', gap:16, alignItems:'center', flexWrap:'wrap' }}>
           <div style={{ display:'grid', gridTemplateColumns:'repeat(3,44px)', gap:3 }}>
@@ -98,7 +96,6 @@ function RecipePreview({ data }) {
     )
   }
 
-  // Smelting
   if (isSmelting) {
     const ingredient = data.ingredient ? itemLabel(data.ingredient) : '?'
     const exp = data.experience || 0
@@ -106,7 +103,7 @@ function RecipePreview({ data }) {
     return (
       <div>
         <div style={{ color:'#4ade80', fontSize:11, marginBottom:10, fontWeight:700 }}>
-          🔥 {data.type?.split(':')[1]?.replace(/_/g,' ') || 'Smelting'}
+          {data.type?.split(':')[1]?.replace(/_/g,' ') || 'Smelting'}
         </div>
         <div style={{ display:'flex', gap:16, alignItems:'center' }}>
           <div style={slotBg(true)}>{ingredient}</div>
@@ -120,7 +117,6 @@ function RecipePreview({ data }) {
     )
   }
 
-  // Fallback
   return (
     <div style={{ color:'#94a3b8', fontSize:12 }}>
       Recipe type: <span style={{ color:'#60a5fa' }}>{data.type || 'unknown'}</span>
@@ -131,32 +127,200 @@ function RecipePreview({ data }) {
   )
 }
 
-// ── Loot Table Preview ─────────────────────────────────────────────────────────
-function LootTablePreview({ data }) {
+// ── Loot Table Chest Preview ───────────────────────────────────────────────────
+function rollLootTable(data) {
+  const results = []
   const pools = data.pools || []
+
+  for (const pool of pools) {
+    let rolls
+    if (typeof pool.rolls === 'object' && pool.rolls !== null) {
+      const min = pool.rolls.min ?? 1
+      const max = pool.rolls.max ?? 1
+      rolls = Math.floor(Math.random() * (max - min + 1)) + min
+    } else {
+      rolls = typeof pool.rolls === 'number' ? pool.rolls : 1
+    }
+
+    const entries = (pool.entries || []).filter(e => e.type !== 'minecraft:empty' && e.type !== 'empty')
+    if (entries.length === 0) continue
+
+    const totalWeight = entries.reduce((s, e) => s + (e.weight || 1), 0)
+
+    for (let r = 0; r < rolls; r++) {
+      let rand = Math.random() * totalWeight
+      let chosen = null
+      for (const entry of entries) {
+        rand -= (entry.weight || 1)
+        if (rand <= 0) { chosen = entry; break }
+      }
+      if (!chosen) chosen = entries[entries.length - 1]
+
+      const name = chosen.name || chosen.id || ''
+      if (name) {
+        // Check for count function
+        let count = 1
+        const countFn = (chosen.functions || []).find(f => f.function?.includes('set_count'))
+        if (countFn?.count) {
+          if (typeof countFn.count === 'object') {
+            const mn = countFn.count.min ?? 1
+            const mx = countFn.count.max ?? 1
+            count = Math.floor(Math.random() * (mx - mn + 1)) + mn
+          } else {
+            count = countFn.count
+          }
+        }
+        results.push({ item: name.replace('minecraft:', ''), count })
+      }
+    }
+  }
+
+  // Build 27-slot chest — scatter items randomly
+  const slots = Array(27).fill(null)
+  const shuffled = [...results].sort(() => Math.random() - 0.5)
+  const positions = Array.from({ length: 27 }, (_, i) => i).sort(() => Math.random() - 0.5)
+  shuffled.forEach((item, i) => {
+    if (i < 27) slots[positions[i]] = item
+  })
+  return slots
+}
+
+function LootTablePreview({ data }) {
+  const [slots, setSlots] = useState(() => rollLootTable(data))
+  const [rolling, setRolling] = useState(false)
+
+  const reroll = useCallback(() => {
+    setRolling(true)
+    setTimeout(() => {
+      setSlots(rollLootTable(data))
+      setRolling(false)
+    }, 250)
+  }, [data])
+
+  const slotStyle = (item) => ({
+    width: 36, height: 36,
+    background: item ? '#1a1a1a' : '#222',
+    border: item ? '2px solid #6b7280' : '2px solid #444',
+    borderRadius: 2,
+    display: 'flex', flexDirection: 'column',
+    alignItems: 'center', justifyContent: 'center',
+    fontSize: 7, color: '#e2e8f0',
+    textAlign: 'center', lineHeight: 1.1,
+    wordBreak: 'break-all', padding: 1,
+    position: 'relative', overflow: 'hidden',
+    cursor: item ? 'help' : 'default',
+    boxShadow: item ? 'inset 0 0 4px rgba(0,0,0,0.6)' : 'none',
+    transition: 'opacity 0.2s',
+  })
+
+  const emptySlot = { width:36, height:36, background:'#222', border:'2px solid #444', borderRadius:2 }
+
   return (
-    <div>
-      <div style={{ color:'#a78bfa', fontSize:11, marginBottom:10, fontWeight:700 }}>
-        🎲 Loot Table — type: {data.type?.split(':')[1] || 'generic'}
+    <div style={{ fontFamily: 'monospace' }}>
+      {/* Header row */}
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
+        <div style={{ color:'#a78bfa', fontSize:11, fontWeight:700 }}>
+          Loot Table — {data.type?.split(':')[1] || 'chest'}
+        </div>
+        <button
+          onClick={reroll}
+          disabled={rolling}
+          style={{
+            background: rolling ? '#0f1e35' : '#1a2f50',
+            border: '1px solid #2a4570',
+            borderRadius: 6, color: '#a78bfa', fontSize: 11,
+            padding: '4px 12px', cursor: rolling ? 'not-allowed' : 'pointer',
+            display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.2s',
+          }}
+        >
+          🎲 {rolling ? 'Rolling…' : 'Re-roll'}
+        </button>
       </div>
-      {pools.map((pool, pi) => (
-        <div key={pi} style={{ background:'#0b1525', border:'1px solid #1a3050', borderRadius:8, padding:10, marginBottom:8 }}>
-          <div style={{ color:'#60a5fa', fontSize:10, marginBottom:6 }}>
-            Pool {pi+1} · rolls: {typeof pool.rolls === 'object'
-              ? `${pool.rolls.min}–${pool.rolls.max}`
-              : pool.rolls || 1}
-          </div>
-          {(pool.entries || []).map((entry, ei) => (
-            <div key={ei} style={{ color:'#e2e8f0', fontSize:11, padding:'3px 0', borderTop: ei>0 ? '1px solid #1a3050' : 'none' }}>
-              <span style={{ color:'#fbbf24' }}>{entry.type?.split(':')[1] || 'item'}</span>
-              {' · '}
-              <span>{entry.name || entry.loot_table || '[entry]'}</span>
-              {entry.weight && <span style={{ color:'#64748b' }}> (weight: {entry.weight})</span>}
+
+      {/* Chest container */}
+      <div style={{ opacity: rolling ? 0.4 : 1, transition: 'opacity 0.25s' }}>
+
+        {/* Chest title */}
+        <div style={{
+          background: 'linear-gradient(180deg,#7a5c14 0%,#5a3e0c 100%)',
+          border: '2px solid #3a2800', borderBottom: 'none',
+          borderRadius: '4px 4px 0 0',
+          padding: '4px 8px', fontSize: 11, color: '#ffe4a0', fontWeight: 700,
+        }}>
+          Chest
+        </div>
+
+        {/* Chest 9×3 grid */}
+        <div style={{
+          background: '#8c8c8c',
+          border: '2px solid #3a2800',
+          padding: 6,
+          display: 'grid',
+          gridTemplateColumns: 'repeat(9, 36px)',
+          gap: 2,
+          borderRadius: '0 0 4px 4px',
+          marginBottom: 12,
+        }}>
+          {slots.map((slot, i) => (
+            <div key={i} title={slot ? `${slot.item}${slot.count > 1 ? ` ×${slot.count}` : ''}` : ''} style={slotStyle(slot)}>
+              {slot && (
+                <>
+                  <span style={{ fontSize: 7, lineHeight: 1.1 }}>
+                    {slot.item.length > 9 ? slot.item.slice(0,9) + '…' : slot.item}
+                  </span>
+                  {slot.count > 1 && (
+                    <span style={{
+                      position: 'absolute', bottom: 1, right: 2,
+                      fontSize: 7, color: '#fff',
+                      textShadow: '1px 1px 0 #000',
+                      fontWeight: 700,
+                    }}>
+                      {slot.count}
+                    </span>
+                  )}
+                </>
+              )}
             </div>
           ))}
         </div>
-      ))}
-      {pools.length === 0 && <div style={{ color:'#64748b', fontSize:11 }}>No pools defined</div>}
+
+        {/* Inventory label */}
+        <div style={{
+          background: 'linear-gradient(180deg,#7a5c14 0%,#5a3e0c 100%)',
+          border: '2px solid #3a2800', borderBottom: 'none',
+          borderRadius: '4px 4px 0 0',
+          padding: '4px 8px', fontSize: 11, color: '#ffe4a0', fontWeight: 700,
+        }}>
+          Inventory
+        </div>
+
+        {/* Player inventory 9×3 */}
+        <div style={{
+          background: '#8c8c8c', border: '2px solid #3a2800',
+          padding: 6, borderRadius: '0 0 0 0',
+          display: 'grid', gridTemplateColumns: 'repeat(9, 36px)', gap: 2,
+        }}>
+          {Array(27).fill(null).map((_, i) => <div key={i} style={emptySlot} />)}
+        </div>
+
+        {/* Hotbar */}
+        <div style={{
+          background: '#8c8c8c', border: '2px solid #3a2800', borderTop: 'none',
+          padding: '4px 6px 6px', borderRadius: '0 0 4px 4px',
+          display: 'grid', gridTemplateColumns: 'repeat(9, 36px)', gap: 2,
+          marginTop: 4,
+        }}>
+          {Array(9).fill(null).map((_, i) => (
+            <div key={i} style={{ ...emptySlot, border: '2px solid #555' }} />
+          ))}
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div style={{ color:'#64748b', fontSize:10, marginTop:10 }}>
+        {data.pools?.length || 0} pool(s) · {slots.filter(Boolean).length} items this roll
+        {' · hover slots to see item names'}
+      </div>
     </div>
   )
 }
@@ -175,9 +339,8 @@ function AdvancementPreview({ data }) {
   return (
     <div>
       <div style={{ color:'#fb923c', fontSize:11, marginBottom:12, fontWeight:700 }}>
-        🏆 Advancement Preview
+        Advancement Preview
       </div>
-      {/* Minecraft-style advancement toast */}
       <div style={{
         background:'rgba(0,0,0,0.8)', border:`2px solid ${frameColor}`,
         borderRadius:4, padding:'8px 12px', display:'inline-flex', alignItems:'center', gap:10,
@@ -239,7 +402,7 @@ function TellrawPreview({ content }) {
 function TexturePreview({ dataUrl }) {
   return (
     <div>
-      <div style={{ color:'#38bdf8', fontSize:11, marginBottom:8, fontWeight:700 }}>🖼️ Texture Preview</div>
+      <div style={{ color:'#38bdf8', fontSize:11, marginBottom:8, fontWeight:700 }}>Texture Preview</div>
       <div style={{ background:'#0a0a1a', border:'1px solid #1a3050', borderRadius:8, padding:12,
         display:'flex', alignItems:'center', justifyContent:'center', minHeight:80 }}>
         <img
@@ -284,24 +447,22 @@ export default function PreviewPanel() {
   const { type, data, raw } = useMemo(() => {
     if (!activeTab || files[activeTab] === undefined) return { type:'none' }
     const content = files[activeTab]
-    const path = activeTab.toLowerCase()
+    const p = activeTab.toLowerCase()
 
-    // Texture (stored as data URL)
     if (typeof content === 'string' && content.startsWith('data:image/')) {
       return { type:'texture', data: content }
     }
 
-    // Parse JSON if applicable
     let parsed = null
     if (typeof content === 'string' && content.trim().startsWith('{')) {
       try { parsed = JSON.parse(content) } catch {}
     }
 
-    if (path.includes('/recipes/') && parsed)      return { type:'recipe',      data: parsed }
-    if (path.includes('/loot_tables/') && parsed)  return { type:'loottable',   data: parsed }
-    if (path.includes('/advancements/') && parsed) return { type:'advancement', data: parsed }
-    if (path.includes('/tags/') && parsed)         return { type:'tag',         data: parsed, raw: path }
-    if (path.endsWith('.mcfunction'))              return { type:'mcfunction',  raw: content }
+    if (p.includes('/recipes/') && parsed)      return { type:'recipe',      data: parsed }
+    if (p.includes('/loot_tables/') && parsed)  return { type:'loottable',   data: parsed }
+    if (p.includes('/advancements/') && parsed) return { type:'advancement', data: parsed }
+    if (p.includes('/tags/') && parsed)         return { type:'tag',         data: parsed, raw: p }
+    if (p.endsWith('.mcfunction'))              return { type:'mcfunction',  raw: content }
 
     return { type:'nothing' }
   }, [activeTab, files])
@@ -318,7 +479,6 @@ export default function PreviewPanel() {
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex-1 overflow-y-auto p-3">
 
-        {/* Header */}
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
           <p className="label mb-0">In-Game Preview</p>
           {activeTab && (
@@ -347,7 +507,6 @@ export default function PreviewPanel() {
           {type === 'texture'     && <TexturePreview dataUrl={data} />}
         </div>
 
-        {/* Tellraw quick editor (only on mcfunction files) */}
         {type === 'mcfunction' && (
           <div style={{ marginTop:12, color:'#64748b', fontSize:10 }}>
             Tip: Add a <code style={{ color:'#fbbf24' }}>tellraw @a ...</code> command to see the chat preview above.
